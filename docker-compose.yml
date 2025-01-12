@@ -17,6 +17,8 @@ services:
       MYSQL_PORT: $MYSQL_PORT
     networks:
       - custom_network
+    ports:
+      - "3000:3000"
 
   mysql:
     image: mysql:5.7
