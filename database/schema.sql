@@ -11,9 +11,9 @@ CREATE TABLE Post (
     createdAt       TIMESTAMP,
     id              INTEGER NOT NULL,
     userId          INTEGER NOT NULL,
-    titleId         INTEGER,
+    titleId         VARCHAR(255),
     courseId        INTEGER,
-    PRIMARY KEY (id)
+    PRIMARY KEY (id, userId)
 );
 
 CREATE TABLE Department (
@@ -26,7 +26,7 @@ CREATE TABLE Course (
     courseTitle     VARCHAR(255),
     courseCode      VARCHAR(50),
     courseId        INTEGER NOT NULL,
-    departmentCode  INTEGER NOT NULL,
+    departmentCode  INTEGER,
     PRIMARY KEY (courseId)
 );
 
@@ -52,7 +52,7 @@ CREATE TABLE Category (
 );
 
 CREATE TABLE Reactions (
-    title           VARCHAR(255),
+    upvote          BOOLEAN,
     userId          INTEGER NOT NULL,
     postId          INTEGER NOT NULL,
     PRIMARY KEY (userId, postId)
@@ -66,9 +66,9 @@ CREATE TABLE Fullname (
 );
 
 ALTER TABLE User ADD FOREIGN KEY (departmentCode) REFERENCES Department (departmentCode) ON DELETE SET NULL ON UPDATE CASCADE;
-ALTER TABLE Post ADD FOREIGN KEY (userId) REFERENCES User (id) ON DELETE SET NULL ON UPDATE CASCADE;
 ALTER TABLE Post ADD FOREIGN KEY (titleId, courseId) REFERENCES Category (title, courseId) ON DELETE SET NULL ON UPDATE CASCADE;
 ALTER TABLE Course ADD FOREIGN KEY (departmentCode) REFERENCES Department (departmentCode) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE Post ADD FOREIGN KEY (userId) REFERENCES User (id) ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE Student ADD FOREIGN KEY (id) REFERENCES User (id) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Admin ADD FOREIGN KEY (id) REFERENCES User (id) ON DELETE CASCADE ON UPDATE CASCADE;
