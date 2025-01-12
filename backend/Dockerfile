@@ -1,4 +1,4 @@
-FROM python:3.10-slim AS backend
+FROM python:3.10 AS backend
 
 WORKDIR /app
 
@@ -10,4 +10,4 @@ COPY . .
 
 WORKDIR /app/django_server
 
-CMD ["python", "manage.py", "runserver"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
