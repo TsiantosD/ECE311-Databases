@@ -11,5 +11,6 @@ urlpatterns = [
     path("users/<int:userId>/", views.user),
     path("users/<int:userId>/posts/", views.user_posts),
     path("posts/<int:postId>/", views.post),
+    path("posts/", views.post),
     path("posts/<int:postId>/reactions/", views.post_reactions),
 ]
