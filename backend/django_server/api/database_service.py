@@ -81,6 +81,24 @@ def create_post():
 def create_reaction():
     pass
 
+"""
+Handles a simple GET request by executing a SQL query and returning the results as a JSON response.
+
+This function checks for the presence of a permission query, and if provided, it verifies 
+whether the user has the required permission. If no permission is found, it returns an error 
+response. After that, it executes the main query, processes the results, and returns them as 
+a JSON response. If no results are found and an `empty_response` is provided, it will return that.
+
+Parameters:
+    query (str): The SQL query to execute.
+    params (tuple): The parameters to pass to the SQL query.
+    permission_query (str, optional): The SQL query to check for permissions (default is None).
+    permission_params (tuple, optional): The parameters to pass with the permission query (default is None).
+    empty_response (JsonResponse, optional): The response to return when no results are found (default is None).
+
+Returns:
+    JsonResponse: A JSON response with the result of the query or an error message if permission is denied.
+"""
 def get_request(query, params, permission_query=None, permission_params=None, empty_response=None):
     if permission_query:
         has_permission = len(execute_query(permission_query, permission_params).fetchone() != 0)
@@ -92,16 +110,71 @@ def get_request(query, params, permission_query=None, permission_params=None, em
         return empty_response
     return JsonResponse(result, safe=False)
 
+"""
+Wrapper function for a simple GET request that does not require permission checks.
+
+This function calls `get_request` without a permission query, making it suitable 
+for cases where no permission check is needed (e.g., public data).
+
+Parameters:
+    query (str): The SQL query to execute.
+    params (tuple): The parameters to pass to the SQL query.
+    empty_response (JsonResponse, optional): The response to return if no results are found (default is None).
+
+Returns:
+    JsonResponse: A JSON response with the result of the query or the empty_response if no results are found.
+"""
 def get_public_request(query, params, empty_response=None):
     return get_request(query, params, None, None, empty_response)
 
+"""
+Wrapper function for a GET request that includes permission checks.
+
+This function calls `get_request` with the provided permission query and parameters 
+to check if the user has permission before proceeding with the main query.
+
+Parameters:
+    query (str): The SQL query to execute.
+    params (tuple): The parameters to pass to the SQL query.
+    permission_query (str): The SQL query to check for permissions.
+    permission_params (tuple): The parameters to pass with the permission query.
+    empty_response (JsonResponse, optional): The response to return if no results are found (default is None).
+
+Returns:
+    JsonResponse: A JSON response with the result of the query or an error message if permission is denied.
+"""
 def get_permission_request(query, params, permission_query, permission_params, empty_response=None):
     return get_request(query, params, permission_query, permission_params, empty_response)
 
+"""
+Fetches all rows from a database cursor and returns them as a list of dictionaries.
+
+This function processes the results of a SQL query, converting each row into a dictionary
+where the column names are used as the keys and the row values are the values.
+
+Parameters:
+    cursor (Cursor): The database cursor containing the result set of an executed query.
+
+Returns:
+    list of dict: A list of dictionaries where each dictionary represents a row from the query result.
+"""
 def dictfetchall(cursor):
     columns = [col[0] for col in cursor.description]
     return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
+"""
+Executes a SQL query with the provided parameters and returns the cursor.
+
+This function executes a query using the given SQL string and parameters, ensuring the query
+is run inside a transaction. It returns the cursor, which can be used to fetch the results.
+
+Parameters:
+    query (str): The SQL query to execute.
+    params (tuple, optional): The parameters to pass with the query (default is None).
+
+Returns:
+    Cursor: The cursor object used to fetch the results of the query.
+"""
 def execute_query(query, params=None):
     with transaction.atomic():
         cursor = connection.cursor()
