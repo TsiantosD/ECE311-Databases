@@ -1,69 +1,75 @@
 from django.shortcuts import render
-from django.http import HttpResponse, JsonResponse
 from django.views.decorators.http import require_http_methods
-from django.db import transaction, connection
-import json
+from . import database_service as db_service
+from django.http import JsonResponse
 
-"""
-Return all rows from a cursor as a dict.
-Assume the column names are unique.
-"""
-def dictfetchall(cursor):
-    columns = [col[0] for col in cursor.description]
-    return [dict(zip(columns, row)) for row in cursor.fetchall()]
+not_authenticated = JsonResponse({"error": "Not authenticated"}, safe=False)
+    
+@require_http_methods(["GET"])
+def department(request, departmentCode=None):
+    if check_authenticated() is None:
+        return not_authenticated
+    return db_service.get_department(departmentCode)
 
-"""
-Execute a query and return the cursor.
-"""
-def execute_query(query, params=None):
-    with transaction.atomic():
-        cursor = connection.cursor()
-        cursor.execute(query, params)
-        return cursor
+@require_http_methods(["GET"])
+def department_courses(request, departmentCode):
+    if check_authenticated() is None:
+        return not_authenticated
+    return db_service.get_courses(departmentCode)
+
+@require_http_methods(["GET"])
+def course(request, courseId):
+    if check_authenticated() is None:
+        return not_authenticated
+    return db_service.get_course(courseId)
+
+@require_http_methods(["GET"])
+def course_categories(request, courseId):
+    if check_authenticated() is None:
+        return not_authenticated
+    return db_service.get_categories(courseId)
+
+@require_http_methods(["GET"])
+def category_posts(request, courseId, titleId):
+    if check_authenticated() is None:
+        return not_authenticated
+    return db_service.get_category_posts(courseId, titleId)
+
+@require_http_methods(["GET"])
+def user(request, userId):
+    if check_authenticated() is None:
+        return not_authenticated
+    return db_service.get_user(userId)
+
+@require_http_methods(["GET"])
+def user_posts(request, userId):
+    if check_authenticated() is None:
+        return not_authenticated
+    return db_service.get_user_posts(userId)
 
 @require_http_methods(["GET", "POST"])
-def react(request):
+def post(request, postId=None):
     if request.method == "POST":
-        return HttpResponse("POST request received")
-    else:
-        if "postId" not in request.GET:
-            return JsonResponse({"error": "Post ID not provided"}, safe=False)
-        
-        query = "SELECT * FROM Reactions WHERE postId = %s;"
-        reactions = dictfetchall(execute_query(query, [request.GET["postId"]]))
-
-        return JsonResponse(reactions, safe=False)
+        return JsonResponse()
+    elif check_authenticated() is None:
+        return not_authenticated:
+    return db_service.get_post(postId)
 
 @require_http_methods(["GET"])
-def post_by_id(request):
-    if "postId" not in request.GET:
-        return JsonResponse({"error": "Post ID not provided"}, safe=False)
-    
-    query = "SELECT * FROM Posts WHERE id = %s;"
-    post = dictfetchall(execute_query(query, [request.GET["postId"]]))
+def post_reactions(request, postId):
+    if check_authenticated() is None:
+        return not_authenticated
+    return db_service.get_post_reactions(postId, request.GET)
 
-    if len(post) == 0:
-        return JsonResponse({"error": "Post not found"}, safe=False)
-    return JsonResponse(post, safe=False)
+"""
+Checks if the user is authenticated.
 
-@require_http_methods(["GET"])
-def posts_by_user(request):
-    if "userId" not in request.GET:
-        return JsonResponse({"error": "User ID not provided"}, safe=False)
-    
-    query = "SELECT * FROM Posts WHERE userId = %s;"
-    posts = dictfetchall(execute_query(query, [request.GET["userId"]]))
+This is a placeholder function and should be replaced with an actual authentication check 
+for your application (e.g., by checking session data, token, etc.).
 
-    return JsonResponse(posts, safe=False)
+Returns:
+    str: The userId of the authenticated user or None if authentication failed
+"""
+def check_authenticated(cookie):
+    return "1"
 
-@require_http_methods(["GET"])
-def user_by_id(request):
-    if "userId" not in request.GET:
-        return JsonResponse({"error": "User ID not provided"}, safe=False)
-    
-    query = "SELECT * FROM Users WHERE id = %s;"
-    user = dictfetchall(execute_query(query, [request.GET["userId"]]))
-
-    if len(user) == 0:
-        return JsonResponse({"error": "User not found"}, safe=False)
-    return JsonResponse(user, safe=False)

@@ -1,0 +1,182 @@
+from django.http import HttpResponse, JsonResponse
+from django.db import transaction, connection
+
+def get_department(departmentCode=None):
+    if departmentCode == None:
+        query = "SELECT * FROM Departments;"
+        params = []
+        return get_public_request(query, params)
+    else:
+        query = "SELECT * FROM Departments WHERE departmentCode = %s;"
+        params = [departmentCode]
+        empty_response = JsonResponse({"error": "Department not found"}, safe=False)
+        return get_public_request(query, params, empty_response)
+
+def get_courses(departmentCode):
+    query = "SELECT * FROM Courses WHERE departmentCode = %s;"
+    params = [departmentCode]
+    return get_public_request(query, params)
+
+def get_course(courseId):
+    query = "SELECT * FROM Courses WHERE courseId = %s;"
+    params = [courseId]
+    empty_response = JsonResponse({"error": "Course not found"}, safe=False)
+    return get_public_request(query, params, empty_response)
+
+def get_categories(courseId):
+    query = "SELECT * FROM Categories WHERE courseId = %s;"
+    params = [courseId]
+    return get_public_request(query, params)
+
+def get_category_posts(courseId, titleId):
+    query = "SELECT * FROM Posts WHERE courseId = %s AND titleId = %s;"
+    params = [courseId, titleId]
+    return get_public_request(query, params)
+
+def get_user(userId):
+    query = "SELECT * FROM Users WHERE id = %s;"
+    params = [userId]
+    empty_response = JsonResponse({"error": "User not found"}, safe=False)
+    return get_public_request(query, params, empty_response)
+
+def get_user_posts(userId):
+    query = "SELECT * FROM Posts WHERE userId = %s;"
+    params = [userId]
+    return get_public_request(query, params)
+
+def get_post(postId):
+    query = "SELECT * FROM Posts WHERE id = %s;"
+    params = [postId]
+    empty_response = JsonResponse({"error": "Post not found"}, safe=False)
+    return get_public_request(query, params, empty_response)
+
+def get_post_reactions(postId, params):
+    if "type" not in params or params["type"] not in ["0", "1"]:
+        return JsonResponse({"error": "Invalid request"}, safe=False)
+    type_name = "upvotes" if params["type"] == "1" else "downvotes" 
+    is_count = "count" in params and params["count"].lower() == "true"
+
+    if is_count:
+        query = "SELECT COUNT(postId) as " + type_name + " FROM Reactions WHERE postId = %s AND upvote = %s;"
+    else:
+        query = "SELECT * FROM Reactions WHERE postId = %s AND upvote = %s;"
+    params = [postId, params["type"]]
+    return get_public_request(query, params)
+
+def create_department():
+    pass
+
+def create_course():
+    pass
+
+def create_category():
+    pass
+
+def create_user():
+    pass
+
+def create_post():
+    pass
+
+def create_reaction():
+    pass
+
+"""
+Handles a simple GET request by executing a SQL query and returning the results as a JSON response.
+
+This function checks for the presence of a permission query, and if provided, it verifies 
+whether the user has the required permission. If no permission is found, it returns an error 
+response. After that, it executes the main query, processes the results, and returns them as 
+a JSON response. If no results are found and an `empty_response` is provided, it will return that.
+
+Parameters:
+    query (str): The SQL query to execute.
+    params (tuple): The parameters to pass to the SQL query.
+    permission_query (str, optional): The SQL query to check for permissions (default is None).
+    permission_params (tuple, optional): The parameters to pass with the permission query (default is None).
+    empty_response (JsonResponse, optional): The response to return when no results are found (default is None).
+
+Returns:
+    JsonResponse: A JSON response with the result of the query or an error message if permission is denied.
+"""
+def get_request(query, params, permission_query=None, permission_params=None, empty_response=None):
+    if permission_query:
+        has_permission = len(execute_query(permission_query, permission_params).fetchone() != 0)
+        if not has_permission:
+            return JsonResponse({"error": "No permission"}, safe=False)
+
+    result = dictfetchall(execute_query(query, params))
+    if empty_response is not None and len(result) == 0:
+        return empty_response
+    return JsonResponse(result, safe=False)
+
+"""
+Wrapper function for a simple GET request that does not require permission checks.
+
+This function calls `get_request` without a permission query, making it suitable 
+for cases where no permission check is needed (e.g., public data).
+
+Parameters:
+    query (str): The SQL query to execute.
+    params (tuple): The parameters to pass to the SQL query.
+    empty_response (JsonResponse, optional): The response to return if no results are found (default is None).
+
+Returns:
+    JsonResponse: A JSON response with the result of the query or the empty_response if no results are found.
+"""
+def get_public_request(query, params, empty_response=None):
+    return get_request(query, params, None, None, empty_response)
+
+"""
+Wrapper function for a GET request that includes permission checks.
+
+This function calls `get_request` with the provided permission query and parameters 
+to check if the user has permission before proceeding with the main query.
+
+Parameters:
+    query (str): The SQL query to execute.
+    params (tuple): The parameters to pass to the SQL query.
+    permission_query (str): The SQL query to check for permissions.
+    permission_params (tuple): The parameters to pass with the permission query.
+    empty_response (JsonResponse, optional): The response to return if no results are found (default is None).
+
+Returns:
+    JsonResponse: A JSON response with the result of the query or an error message if permission is denied.
+"""
+def get_permission_request(query, params, permission_query, permission_params, empty_response=None):
+    return get_request(query, params, permission_query, permission_params, empty_response)
+
+"""
+Fetches all rows from a database cursor and returns them as a list of dictionaries.
+
+This function processes the results of a SQL query, converting each row into a dictionary
+where the column names are used as the keys and the row values are the values.
+
+Parameters:
+    cursor (Cursor): The database cursor containing the result set of an executed query.
+
+Returns:
+    list of dict: A list of dictionaries where each dictionary represents a row from the query result.
+"""
+def dictfetchall(cursor):
+    columns = [col[0] for col in cursor.description]
+    return [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+"""
+Executes a SQL query with the provided parameters and returns the cursor.
+
+This function executes a query using the given SQL string and parameters, ensuring the query
+is run inside a transaction. It returns the cursor, which can be used to fetch the results.
+
+Parameters:
+    query (str): The SQL query to execute.
+    params (tuple, optional): The parameters to pass with the query (default is None).
+
+Returns:
+    Cursor: The cursor object used to fetch the results of the query.
+"""
+def execute_query(query, params=None):
+    with transaction.atomic():
+        cursor = connection.cursor()
+        cursor.execute(query, params)
+        return cursor

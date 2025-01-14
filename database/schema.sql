@@ -1,6 +1,6 @@
 CREATE TABLE Users (
     username        VARCHAR(255),
-    id              INTEGER NOT NULL,
+    id              CHAR(72) NOT NULL,
     departmentCode  INTEGER,
     PRIMARY KEY (id)
 );
@@ -10,9 +10,9 @@ CREATE TABLE Posts (
     title           VARCHAR(255),
     createdAt       TIMESTAMP,
     id              INTEGER NOT NULL,
-    userId          INTEGER,
+    userId          CHAR(72),
     titleId         VARCHAR(255),
-    courseId        INTEGER,
+    courseId        CHAR(36),
     PRIMARY KEY (id)
 );
 
@@ -25,35 +25,35 @@ CREATE TABLE Departments (
 CREATE TABLE Courses (
     courseTitle     VARCHAR(255),
     courseCode      VARCHAR(50),
-    courseId        INTEGER NOT NULL,
+    courseId        CHAR(36) NOT NULL,
     departmentCode  INTEGER,
     PRIMARY KEY (courseId)
 );
 
 CREATE TABLE Students (
-    id              INTEGER NOT NULL,
+    id              CHAR(72) NOT NULL,
     PRIMARY KEY (id)
 );
 
 CREATE TABLE Admins (
-    id              INTEGER NOT NULL,
+    id              CHAR(72) NOT NULL,
     PRIMARY KEY (id)
 );
 
 CREATE TABLE Developers (
-    id              INTEGER NOT NULL,
+    id              CHAR(72) NOT NULL,
     PRIMARY KEY (id)
 );
 
 CREATE TABLE Categories (
     title           VARCHAR(255) NOT NULL,
-    courseId        INTEGER NOT NULL,
+    courseId        CHAR(36) NOT NULL,
     PRIMARY KEY (title, courseId)
 );
 
 CREATE TABLE Reactions (
     upvote          BOOLEAN,
-    userId          INTEGER NOT NULL,
+    userId          CHAR(72) NOT NULL,
     postId          INTEGER NOT NULL,
     PRIMARY KEY (userId, postId)
 );
@@ -61,7 +61,7 @@ CREATE TABLE Reactions (
 CREATE TABLE Fullnames (
     firstName       VARCHAR(255) NOT NULL,
     lastName        VARCHAR(255) NOT NULL,
-    userId          INTEGER NOT NULL,
+    userId          CHAR(72) NOT NULL,
     PRIMARY KEY (firstName, lastName, userId)
 );
 
