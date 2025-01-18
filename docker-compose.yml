@@ -4,6 +4,8 @@ networks:
 
 services:
   django:
+    depends_on:
+      - mysql
     build:
       context: ./backend
       dockerfile: Dockerfile
