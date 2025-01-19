@@ -26,12 +26,9 @@ def department(request):
 @csrf_exempt
 @require_http_methods(["GET", "OPTIONS"])
 def department_courses(request):
-    # fernet = Fernet(os.environ.get('FERNET_KEY'))
-    # jsessionid = fernet.decrypt(request.headers.get('x-jsessionid', None).encode()).decode()
-    # csrf_token = fernet.decrypt(request.headers.get('x-sis-csrf-token', None).encode()).decode()
-    jsessionid = request.headers.get('x-jsessionid', None)
-    csrf_token = request.headers.get('x-sis-csrf-token', None)
-    authenticated_user_id = check_authenticated(jsessionid, csrf_token)
+    fernet = Fernet(os.environ.get('FERNET_KEY'))
+    jsessionid = fernet.decrypt(request.headers.get('x-jsessionid', None).encode()).decode()
+    csrf_token = fernet.decrypt(request.headers.get('x-sis-csrf-token', None).encode()).decode()
     authenticated_user_id = check_authenticated(jsessionid, csrf_token)
     if authenticated_user_id is None:
         return not_authenticated
@@ -75,7 +72,6 @@ def category_posts(request, courseId, categoryTitle):
         return not_authenticated
     if request.method == "POST":
         data = request.body.dict()
-        return JsonResponse(data, safe=False)
         url = data.get("url", None)
         title = data.get("title", None)
         if url is None or title is None:

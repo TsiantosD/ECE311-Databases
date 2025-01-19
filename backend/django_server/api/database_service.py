@@ -14,7 +14,6 @@ def get_courses(userId, courseTitle):
     else: 
         query = "SELECT * FROM Courses WHERE LOWER(courseTitle) LIKE %s AND departmentCode = (SELECT departmentCode FROM Users WHERE id=%s);"
         params = [f"%{courseTitle.lower()}%", userId]
-    # return JsonResponse({"query": query, "params": params})
     return get_public_request(query, params)
 
 def get_course(userId, courseId):
