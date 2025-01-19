@@ -12,7 +12,7 @@ not_authenticated = JsonResponse({"error": "Not authenticated"}, safe=False)
 
 
 @csrf_exempt
-@require_http_methods(["GET"])
+@require_http_methods(["GET", "OPTIONS"])
 def department(request):
     fernet = Fernet(os.environ.get('FERNET_KEY'))
     jsessionid = fernet.decrypt(request.headers.get('x-jsessionid', None).encode()).decode()
@@ -24,7 +24,7 @@ def department(request):
 
 
 @csrf_exempt
-@require_http_methods(["GET"])
+@require_http_methods(["GET", "OPTIONS"])
 def department_courses(request):
     fernet = Fernet(os.environ.get('FERNET_KEY'))
     jsessionid = fernet.decrypt(request.headers.get('x-jsessionid', None).encode()).decode()
@@ -36,10 +36,11 @@ def department_courses(request):
 
 
 @csrf_exempt
-@require_http_methods(["GET"])
+@require_http_methods(["GET", "OPTIONS"])
 def course(request, courseId):
-    jsessionid = request.headers.get('x-jsessionid', None)
-    csrf_token = request.headers.get('x-sis-csrf-token', None)
+    fernet = Fernet(os.environ.get('FERNET_KEY'))
+    jsessionid = fernet.decrypt(request.headers.get('x-jsessionid', None).encode()).decode()
+    csrf_token = fernet.decrypt(request.headers.get('x-sis-csrf-token', None).encode()).decode()
     authenticated_user_id = check_authenticated(jsessionid, csrf_token)
     if authenticated_user_id is None:
         return not_authenticated
@@ -47,10 +48,11 @@ def course(request, courseId):
 
 
 @csrf_exempt
-@require_http_methods(["GET"])
+@require_http_methods(["GET", "OPTIONS"])
 def course_categories(request, courseId):
-    jsessionid = request.headers.get('x-jsessionid', None)
-    csrf_token = request.headers.get('x-sis-csrf-token', None)
+    fernet = Fernet(os.environ.get('FERNET_KEY'))
+    jsessionid = fernet.decrypt(request.headers.get('x-jsessionid', None).encode()).decode()
+    csrf_token = fernet.decrypt(request.headers.get('x-sis-csrf-token', None).encode()).decode()
     authenticated_user_id = check_authenticated(jsessionid, csrf_token)
     if authenticated_user_id is None:
         return not_authenticated
@@ -58,10 +60,11 @@ def course_categories(request, courseId):
 
 
 @csrf_exempt
-@require_http_methods(["GET"])
+@require_http_methods(["GET", "OPTIONS"])
 def category_posts(request, courseId, titleId):
-    jsessionid = request.headers.get('x-jsessionid', None)
-    csrf_token = request.headers.get('x-sis-csrf-token', None)
+    fernet = Fernet(os.environ.get('FERNET_KEY'))
+    jsessionid = fernet.decrypt(request.headers.get('x-jsessionid', None).encode()).decode()
+    csrf_token = fernet.decrypt(request.headers.get('x-sis-csrf-token', None).encode()).decode()
     authenticated_user_id = check_authenticated(jsessionid, csrf_token)
     if authenticated_user_id is None:
         return not_authenticated
@@ -69,10 +72,11 @@ def category_posts(request, courseId, titleId):
 
 
 @csrf_exempt
-@require_http_methods(["GET"])
+@require_http_methods(["GET", "OPTIONS"])
 def user(request, userId):
-    jsessionid = request.headers.get('x-jsessionid', None)
-    csrf_token = request.headers.get('x-sis-csrf-token', None)
+    fernet = Fernet(os.environ.get('FERNET_KEY'))
+    jsessionid = fernet.decrypt(request.headers.get('x-jsessionid', None).encode()).decode()
+    csrf_token = fernet.decrypt(request.headers.get('x-sis-csrf-token', None).encode()).decode()
     authenticated_user_id = check_authenticated(jsessionid, csrf_token)
     if authenticated_user_id is None:
         return not_authenticated
@@ -80,10 +84,11 @@ def user(request, userId):
 
 
 @csrf_exempt
-@require_http_methods(["GET"])
+@require_http_methods(["GET", "OPTIONS"])
 def user_posts(request, userId):
-    jsessionid = request.headers.get('x-jsessionid', None)
-    csrf_token = request.headers.get('x-sis-csrf-token', None)
+    fernet = Fernet(os.environ.get('FERNET_KEY'))
+    jsessionid = fernet.decrypt(request.headers.get('x-jsessionid', None).encode()).decode()
+    csrf_token = fernet.decrypt(request.headers.get('x-sis-csrf-token', None).encode()).decode()
     authenticated_user_id = check_authenticated(jsessionid, csrf_token)
     if authenticated_user_id is None:
         return not_authenticated
@@ -91,10 +96,11 @@ def user_posts(request, userId):
 
 
 @csrf_exempt
-@require_http_methods(["GET", "POST"])
+@require_http_methods(["GET", "OPTIONS", "POST"])
 def post(request, postId=None):
-    jsessionid = request.headers.get('x-jsessionid', None)
-    csrf_token = request.headers.get('x-sis-csrf-token', None)
+    fernet = Fernet(os.environ.get('FERNET_KEY'))
+    jsessionid = fernet.decrypt(request.headers.get('x-jsessionid', None).encode()).decode()
+    csrf_token = fernet.decrypt(request.headers.get('x-sis-csrf-token', None).encode()).decode()
     authenticated_user_id = check_authenticated(jsessionid, csrf_token)
     if request.method == "POST":
         return JsonResponse()
@@ -104,10 +110,11 @@ def post(request, postId=None):
 
 
 @csrf_exempt
-@require_http_methods(["GET"])
+@require_http_methods(["GET", "OPTIONS"])
 def post_reactions(request, postId):
-    jsessionid = request.headers.get('x-jsessionid', None)
-    csrf_token = request.headers.get('x-sis-csrf-token', None)
+    fernet = Fernet(os.environ.get('FERNET_KEY'))
+    jsessionid = fernet.decrypt(request.headers.get('x-jsessionid', None).encode()).decode()
+    csrf_token = fernet.decrypt(request.headers.get('x-sis-csrf-token', None).encode()).decode()
     authenticated_user_id = check_authenticated(jsessionid, csrf_token)
     if authenticated_user_id is None:
         return not_authenticated
@@ -126,9 +133,9 @@ Returns:
 def check_authenticated(cookie, csrf_token):
     if cookie is None or csrf_token is None:
         return None
+
     user_profile_request = requests.get('https://sis-web.uth.gr/api/person/profiles',
-                     cookies={'JSESSIONID': cookie},
-                     headers={'X-Csrf-Token': csrf_token})
+                     cookies={'JSESSIONID': cookie})
 
     try:
         profile = user_profile_request.json()

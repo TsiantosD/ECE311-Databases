@@ -25,6 +25,7 @@ def get_categories(userId, courseId):
     params = [courseId]
     permission_query = "SELECT id FROM Users as u INNER JOIN Courses as c ON u.departmentCode=c.departmentCode WHERE u.id=%s AND c.courseId=%s"
     permission_params = [userId, courseId]
+    empty_response = JsonResponse({"error": "Course not found"}, safe=False)
     return get_permission_request(query, params, permission_query, permission_params, empty_response)
 
 def get_category_posts(userId, courseId, titleId):
@@ -32,6 +33,7 @@ def get_category_posts(userId, courseId, titleId):
     params = [courseId, titleId]
     permission_query = "SELECT id FROM Users as u INNER JOIN Courses as c ON u.departmentCode=c.departmentCode WHERE u.id=%s AND c.courseId=%s"
     permission_params = [userId, courseId]
+    empty_response = JsonResponse({"error": "Course not found"}, safe=False)
     return get_permission_request(query, params, permission_query, permission_params, empty_response)
 
 def get_user(userId, user_to_find):
