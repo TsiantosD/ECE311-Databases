@@ -1,5 +1,6 @@
 from django.http import HttpResponse, JsonResponse
 from django.db import transaction, connection
+import datetime
 
 def get_department(userId):
     query = "SELECT * FROM Departments WHERE departmentCode = (SELECT departmentCode FROM Users WHERE id=%s);"
@@ -35,13 +36,15 @@ def get_categories(userId, courseId, categoryTitle):
     permission_params = [userId, courseId]
     return get_permission_request(query, params, permission_query, permission_params)
 
-def get_category_posts(userId, courseId, categoryTitle, postTitle):
+def get_category_posts(userId, courseId, categoryTitle, postTitle, sortBy):
     if postTitle is None:
         query = "SELECT * FROM Posts WHERE courseId = %s AND categoryTitle = %s;"
         params = [courseId, categoryTitle]
     else: 
         query = "SELECT * FROM Posts WHERE courseId = %s AND categoryTitle = %s AND title LIKE %s;"
-        params = [courseId, categoryTitle, f"%{postTitle.lower()}%",]
+        params = [courseId, categoryTitle, f"%{postTitle.lower()}%"]
+    if sortBy is not None and sortBy["column"] in ["createdAt", "title"] and sortBy["method"].upper() in ["ASC", "DESC"]:
+        query = query + " ORDER BY " + sortBy["column"] + " " + sortBy["method"].upper()
     permission_query = "SELECT id FROM Users as u INNER JOIN Courses as c ON u.departmentCode=c.departmentCode WHERE u.id=%s AND c.courseId=%s"
     permission_params = [userId, courseId]
     return get_permission_request(query, params, permission_query, permission_params)
@@ -112,10 +115,14 @@ def create_post(url, title, userId, categoryTitle, courseId):
     return post_request(query, params, permission_query, permission_params)
 
 def create_reaction(upvote, userId, postId):
-    query = "INSERT INTO Reactions (upvote, userId, postId) VALUES (%s, %s, %s)"
+    reaction_exists = execute_query("SELECT * FROM Reactions WHERE postId=%s AND userId=%s", [postId, userId]).fetchone() is not None
+    if reaction_exists:
+        query = "UPDATE Reactions SET upvote=%s WHERE userId=%s AND postId=%s"
+    else: 
+        query = "INSERT INTO Reactions (upvote, userId, postId) VALUES (%s, %s, %s)"
     params = [upvote, userId, postId]
-    permission_query = "SELECT u.id FROM Users as u INNER JOIN Courses as c ON u.departmentCode=c.departmentCode WHERE u.id=%s AND c.courseId=%s"
-    permission_params = [userId, courseId]
+    permission_query = "SELECT u.id FROM Users as u INNER JOIN Courses as c ON u.departmentCode=c.departmentCode INNER JOIN Posts as p ON p.courseId=c.courseId WHERE u.id=%s AND p.id=%s"
+    permission_params = [userId, postId]
     return post_request(query, params, permission_query, permission_params)
     
 

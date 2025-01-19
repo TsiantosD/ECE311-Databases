@@ -5,7 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse, HttpResponse
 from . import database_service as db_service
-from json import JSONDecodeError
+from json import JSONDecodeError, loads
 
 
 not_authenticated = JsonResponse({"error": "Not authenticated"}, safe=False)
@@ -71,14 +71,23 @@ def category_posts(request, courseId, categoryTitle):
     if authenticated_user_id is None:
         return not_authenticated
     if request.method == "POST":
-        data = request.body.dict()
+        data = request.body
+        try:
+            data = loads(request.body)  # Parse the JSON body
+        except JSONDecodeError:
+            return HttpResponse(status=400)
         url = data.get("url", None)
         title = data.get("title", None)
         if url is None or title is None:
             return HttpResponse(status=400)
         return HttpResponse(status=200) if db_service.create_post(url, title, authenticated_user_id, categoryTitle, courseId) else HttpResponse(status=403)
     postTitle = request.GET.get("search", None)
-    return db_service.get_category_posts(authenticated_user_id, courseId, categoryTitle, postTitle)
+    sortByParam = request.GET.get("sortBy", None)
+    sortBy = None
+    if sortByParam is not None:
+        sortByList = sortByParam.split("_")
+        sortBy = {"column": sortByList[0], "method": sortByList[1]}
+    return db_service.get_category_posts(authenticated_user_id, courseId, categoryTitle, postTitle, sortBy)
 
 
 @csrf_exempt
@@ -127,7 +136,7 @@ def post_reactions(request, postId):
     if authenticated_user_id is None:
         return not_authenticated
     if request.method == "PUT":
-        upvote_type = request.POST.get("type", None)
+        upvote_type = request.GET.get("type", None)
         if upvote_type == None:
             return HttpResponse(status=400)
         return HttpResponse(status=200) if db_service.create_reaction(upvote_type, authenticated_user_id, postId) else HttpResponse(status=403)
