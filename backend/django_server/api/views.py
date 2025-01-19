@@ -132,7 +132,6 @@ def check_authenticated(cookie, csrf_token):
 
     try:
         profile = user_profile_request.json()
-        print(profile)
         if "studentProfiles" not in profile:
             return None
         user_profile = profile["studentProfiles"][0]
@@ -153,15 +152,11 @@ Checks if a specific department exists in the database
 and if it doesn't, it creates it.
 """
 def create_department_if_not_exists(cookie, csrf_token, departmentCode, departmentTitle):
-    print('Creating department', departmentCode)
     department_exists_result = db_service.dictfetchall(db_service.execute_query("SELECT COUNT(*) as count FROM Departments WHERE departmentCode=%s", [departmentCode]))
     if department_exists_result[0]["count"] == 0:
         courses_request = requests.get('https://sis-web.uth.gr/feign/student/program_courses',
                         cookies={'JSESSIONID': cookie},
-                        headers={'X-Csrf-Token': csrf_token,
-                                 'X-Requested-With': 'XMLHttpRequest',
-                                 'X-Profile': '90142616-460C-4D5D-A40B-0E9C32998927B4D89230-8DE6-4587-AA79-283CA428BB58'
-                                 }).json()
+                        headers={'X-Csrf-Token': csrf_token}).json()
         db_service.create_department(departmentCode, departmentTitle, courses_request["programCourse"])
 
 """
